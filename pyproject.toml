@@ -10,6 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Model providers
 openai = ["openai"]
 google = ["google-genai"]
 anthropic = ["anthropic"]
@@ -17,14 +18,6 @@ groq = ["groq"]
 mistral = ["mistralai"]
 cohere = ["cohere"]
 ollama = ["ollama"]
-serve = ["agno[os]", "uvicorn"]
-quickstart = [
-    "openai",
-    "google-genai",
-    "yfinance",
-    "duckduckgo-search",
-    "sqlalchemy",
-]
 all-models = [
     "openai",
     "google-genai",
@@ -34,17 +27,50 @@ all-models = [
     "cohere",
     "ollama",
 ]
+
+# AgentOS server
+serve = ["agentos-serve"]
+
+# Tools used across many cookbook examples (>2 files)
+common-tools = [
+    "agno[ddg]",          # duckduckgo search (~10 files)
+    "agno[yfinance]",     # finance data (~42 files)
+    "agno[exa]",          # exa search (~7 files)
+    "agno[newspaper]",    # article extraction (~2 files)
+    "agno[sql]",          # SQL tools (~3 files)
+    "agno[duckdb]",       # duckdb (~2 files)
+]
+
+# Individual tool extras (install as needed)
+mcp = ["agno[mcp]"]
+fal = ["agno[fal]"]
+firecrawl = ["agno[firecrawl]"]
+github = ["agno[github]"]
+crawl4ai = ["agno[crawl4ai]"]
+
+# Bundles
+quickstart = [
+    "agno-cookbook[serve,common-tools]",
+    "openai",
+    "google-genai",
+]
+all = [
+    "agno-cookbook[serve,common-tools,all-models,mcp]",
+]
 dev = [
     "ruff",
     "mypy",
 ]
 
 [project.scripts]
-agentos = "cookbook_config.cli:main"
+agentos = "agentos_serve.cli:main"
 
 [build-system]
 requires = ["setuptools>=75.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.uv.sources]
+agentos-serve = { path = "agentos-serve", editable = true }
 
 [tool.setuptools.packages.find]
 include = ["cookbook_config*"]

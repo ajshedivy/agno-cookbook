@@ -1,0 +1,68 @@
+name: Publish agentos-serve to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (must match pyproject.toml)"
+        required: true
+        type: string
+      test_pypi:
+        description: "Publish to TestPyPI instead of PyPI"
+        required: false
+        type: boolean
+        default: false
+
+defaults:
+  run:
+    working-directory: agentos-serve
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Verify version matches input
+        run: |
+          PKG_VERSION=$(python3 -c "
+          import tomllib
+          with open('pyproject.toml', 'rb') as f:
+              print(tomllib.load(f)['project']['version'])
+          ")
+          if [ "$PKG_VERSION" != "${{ inputs.version }}" ]; then
+            echo "::error::Version mismatch: pyproject.toml has $PKG_VERSION but workflow input is ${{ inputs.version }}"
+            exit 1
+          fi
+
+      - name: Build package
+        run: uv build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: agentos-serve/dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.test_pypi && 'testpypi' || 'pypi' }}
+    permissions:
+      id-token: write
+    steps:
+      - uses: astral-sh/setup-uv@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        if: ${{ !inputs.test_pypi }}
+        run: uv publish dist/*
+
+      - name: Publish to TestPyPI
+        if: ${{ inputs.test_pypi }}
+        run: uv publish dist/* --publish-url https://test.pypi.org/legacy/

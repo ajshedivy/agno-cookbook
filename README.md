@@ -46,6 +46,37 @@ uv sync --extra quickstart --extra anthropic   # Quickstart tools + Anthropic
 uv sync --extra all-models                     # All major provider SDKs
 ```
 
+## AgentOS
+
+The `agentos-serve` package lets you spin up AgentOS from any Python file containing Agno agents, teams, or workflows.
+
+### Install (editable mode, for development)
+
+```bash
+uv pip install -e agentos-serve
+```
+
+Or install it via the `serve` extra (non-editable, from PyPI):
+
+```bash
+uv sync --extra serve
+```
+
+### Usage
+
+```bash
+# Serve a single file
+agentos-serve cookbook/02_agents/01_quickstart/basic_agent.py
+
+# Serve all agents in a directory
+agentos-serve cookbook/02_agents/01_quickstart/
+
+# The cookbook also provides an `agentos` alias
+uv run agentos cookbook/02_agents/01_quickstart/
+```
+
+See [`agentos-serve/README.md`](agentos-serve/README.md) for full CLI options and extras.
+
 ## Directory Structure
 
 ```

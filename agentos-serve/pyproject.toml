@@ -1,0 +1,27 @@
+[project]
+name = "agentos-serve"
+version = "0.1.0"
+description = "Spin up AgentOS from any Python file containing Agno agents, teams, or workflows"
+requires-python = ">=3.12"
+dependencies = [
+    "agno[os]",
+    "uvicorn",
+]
+
+[project.optional-dependencies]
+common-tools = [
+    "agno[ddg]",
+    "agno[yfinance]",
+    "agno[exa]",
+    "agno[newspaper]",
+    "agno[sql]",
+    "agno[duckdb]",
+]
+mcp = ["agno[mcp]"]
+
+[project.scripts]
+agentos-serve = "agentos_serve.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
