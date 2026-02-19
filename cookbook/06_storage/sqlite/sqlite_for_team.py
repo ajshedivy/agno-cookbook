@@ -1,0 +1,67 @@
+"""
+1. Run: `uv pip install openai ddgs newspaper4k lxml_html_clean agno` to install the dependencies
+2. Run: `python cookbook/storage/sqlite_storage/sqlite_storage_for_team.py` to run the team
+"""
+
+from typing import List
+
+from agno.agent import Agent
+from agno.db.sqlite import SqliteDb
+from agno.team import Team
+from agno.tools.hackernews import HackerNewsTools
+from agno.tools.websearch import WebSearchTools
+from pydantic import BaseModel
+
+from cookbook_config import model
+
+# ---------------------------------------------------------------------------
+# Setup
+# ---------------------------------------------------------------------------
+db = SqliteDb(db_file="tmp/data.db", session_table="new_sessions_five")
+
+
+# ---------------------------------------------------------------------------
+# Create Team
+# ---------------------------------------------------------------------------
+class Article(BaseModel):
+    title: str
+    summary: str
+    reference_links: List[str]
+
+
+hn_researcher = Agent(
+    name="HackerNews Researcher",
+    model=model,
+    role="Gets top stories from hackernews.",
+    tools=[HackerNewsTools()],
+)
+
+web_searcher = Agent(
+    name="Web Searcher",
+    model=model,
+    role="Searches the web for information on a topic",
+    tools=[WebSearchTools()],
+    add_datetime_to_context=True,
+)
+
+
+hn_team = Team(
+    name="HackerNews Team",
+    model=model,
+    members=[hn_researcher, web_searcher],
+    db=db,
+    instructions=[
+        "First, search hackernews for what the user is asking about.",
+        "Then, ask the web searcher to search for each story to get more information.",
+        "Finally, provide a thoughtful and engaging summary.",
+    ],
+    output_schema=Article,
+    markdown=True,
+    show_members_responses=True,
+)
+
+# ---------------------------------------------------------------------------
+# Run Team
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    hn_team.print_response("Write an article about the top 2 stories on hackernews")

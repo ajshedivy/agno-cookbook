@@ -1,0 +1,52 @@
+"""
+Custom Evaluator Agent-as-Judge Evaluation
+==========================================
+
+Demonstrates using a custom evaluator agent for judging.
+"""
+
+from agno.agent import Agent
+from agno.eval.agent_as_judge import AgentAsJudgeEval
+
+from cookbook_config import model
+
+# ---------------------------------------------------------------------------
+# Create Agent
+# ---------------------------------------------------------------------------
+agent = Agent(
+    model=model,
+    instructions="Explain technical concepts simply.",
+)
+
+# ---------------------------------------------------------------------------
+# Create Evaluator Agent
+# ---------------------------------------------------------------------------
+custom_evaluator = Agent(
+    model=model,
+    description="Strict technical evaluator",
+    instructions="You are a strict evaluator. Only give high scores to exceptionally clear and accurate explanations.",
+)
+
+# ---------------------------------------------------------------------------
+# Create Evaluation
+# ---------------------------------------------------------------------------
+evaluation = AgentAsJudgeEval(
+    name="Technical Accuracy",
+    criteria="Explanation must be technically accurate and comprehensive",
+    scoring_strategy="numeric",
+    threshold=8,
+    evaluator_agent=custom_evaluator,
+)
+
+# ---------------------------------------------------------------------------
+# Run Evaluation
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    response = agent.run("What is machine learning?")
+    result = evaluation.run(
+        input="What is machine learning?",
+        output=str(response.content),
+        print_results=True,
+    )
+    print(f"Score: {result.results[0].score}/10")
+    print(f"Passed: {result.results[0].passed}")

@@ -1,0 +1,57 @@
+[project]
+name = "agno-cookbook"
+version = "0.1.0"
+description = "Agno cookbook examples with configurable model selection"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "agno",
+    "pydantic-settings",
+]
+
+[project.optional-dependencies]
+openai = ["openai"]
+google = ["google-genai"]
+anthropic = ["anthropic"]
+groq = ["groq"]
+mistral = ["mistralai"]
+cohere = ["cohere"]
+ollama = ["ollama"]
+serve = ["agno[os]", "uvicorn"]
+quickstart = [
+    "openai",
+    "google-genai",
+    "yfinance",
+    "duckduckgo-search",
+    "sqlalchemy",
+]
+all-models = [
+    "openai",
+    "google-genai",
+    "anthropic",
+    "groq",
+    "mistralai",
+    "cohere",
+    "ollama",
+]
+dev = [
+    "ruff",
+    "mypy",
+]
+
+[project.scripts]
+agentos = "cookbook_config.cli:main"
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["cookbook_config*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
