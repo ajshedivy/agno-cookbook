@@ -13,13 +13,12 @@ on:
         type: boolean
         default: false
 
-defaults:
-  run:
-    working-directory: agentos-serve
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agentos-serve
     steps:
       - uses: actions/checkout@v4
 
