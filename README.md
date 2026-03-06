@@ -101,27 +101,24 @@ cookbook/
 
 > **Note:** `cookbook/90_models/` contains provider-specific examples with hardcoded model classes. These are intentionally not configurable — they demonstrate provider-specific features.
 
-## Claude Code Skills
+## Agent Skills
 
-The `plugins/` directory contains Claude Code skill packs that teach Claude how to build with the Agno ecosystem. Skills provide domain-specific guidance, CLI scripts, and API reference patterns so Claude can write correct Agno code, interact with AgentOS instances, and follow framework best practices.
+The `plugins/` directory contains agent skill packs that provide domain-specific guidance, CLI scripts, and API reference patterns for building with the Agno ecosystem.
 
-### Installing Skills
+### Connecting Skills to Claude Code
 
-Skills are distributed as [Claude Code plugins](https://docs.anthropic.com/en/docs/claude-code/plugins). Install them from the plugin marketplace:
-
-1. Open Claude Code
-2. Run `/plugins` to open the plugin marketplace
-3. Search for the skill pack you want (e.g., `agno-framework` or `agno-agentos-api`)
-4. Select it and confirm the install
-
-Once installed, skills activate automatically based on context — for example, asking Claude to "create an Agno agent with tools" triggers the `agno-agent` skill, and asking "list my agents on AgentOS" triggers `agentos-api-agents`.
-
-You can also install from a local path for development:
+Install skills as [Claude Code plugins](https://docs.anthropic.com/en/docs/claude-code/plugins):
 
 ```bash
+# From the plugin marketplace
+# Run /plugins in Claude Code, search for the skill pack, and install
+
+# Or install from a local path
 claude plugins add ./plugins/agno-framework
 claude plugins add ./plugins/agno-agentos-api
 ```
+
+Once connected, skills activate automatically based on context — asking Claude to "create an Agno agent with tools" triggers `agno-agent`, and "list my agents on AgentOS" triggers `agentos-api-agents`.
 
 ### `agno-framework` — Agno SDK Development
 
