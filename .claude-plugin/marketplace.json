@@ -1,0 +1,36 @@
+{
+  "name": "agno-skills",
+  "owner": {
+    "name": "ajshedivy"
+  },
+  "metadata": {
+    "description": "Claude Code skills for building AI agents with Agno and the AgentOS API",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "agno-framework",
+      "source": "./plugins/agno-framework",
+      "description": "Build AI agents, teams, and workflows with the Agno framework",
+      "version": "1.0.0",
+      "author": {
+        "name": "ajshedivy"
+      },
+      "license": "Apache-2.0",
+      "keywords": ["agno", "agent", "ai", "tools", "workflow", "team", "knowledge", "memory"],
+      "category": "development"
+    },
+    {
+      "name": "agno-agentos-api",
+      "source": "./plugins/agno-agentos-api",
+      "description": "Interact with AgentOS API for remote agent management, sessions, traces, and evals",
+      "version": "1.0.0",
+      "author": {
+        "name": "ajshedivy"
+      },
+      "license": "Apache-2.0",
+      "keywords": ["agentos", "api", "client", "agno", "remote"],
+      "category": "development"
+    }
+  ]
+}

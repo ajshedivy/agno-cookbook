@@ -1,0 +1,5 @@
+{
+  "name": "agno-agentos-api",
+  "description": "Interact with AgentOS API endpoints — manage agents, teams, sessions, traces, evals, knowledge, memory, and workflows remotely",
+  "version": "1.0.0"
+}
