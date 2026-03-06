@@ -1,23 +1,21 @@
 ---
 name: agentos-api-knowledge
 description: |
-  Interact with AgentOS Knowledge API endpoints using the AgentOSClient SDK.
-  Use this skill to write ad-hoc Python scripts, tests, and automation
-  for uploading content, searching the knowledge base, listing and
-  deleting content, checking content status, and getting config. Trigger
-  when: importing AgentOSClient to work with knowledge, writing scripts
-  to upload documents, creating knowledge tests, or asking things like
-  "upload this md file to my knowledge base" or "search my docs for X."
+  Interact with AgentOS Knowledge API endpoints. For standard operations
+  (listing content, uploading files, searching, deleting), use the provided
+  CLI script first. Only write custom Python when the script cannot handle
+  the use case (e.g., pagination, updating metadata, bulk workflows,
+  get config). Trigger when: uploading documents, searching the knowledge
+  base, listing content, or asking things like "upload this md file to my
+  knowledge base" or "search my docs for X."
 license: Apache-2.0
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: agno-team
   tags: ["agentos", "knowledge", "api", "client", "agno"]
 ---
 
 # AgentOS Knowledge API
-
-Use `agno.client.AgentOSClient` to upload, search, list, and manage knowledge base content on a remote AgentOS instance. Only requires `uv` — all dependencies are declared inline via PEP 723.
 
 ## Prerequisites
 
@@ -55,6 +53,74 @@ agent_os = AgentOS(agents=[agent], knowledge=[knowledge])
 agent_os.serve()
 ```
 
+## Default: Use the CLI Script
+
+**Always try the provided script first.** It covers listing content, uploading
+files, uploading raw text, searching the knowledge base, checking processing
+status, and deleting content — all from the command line with no custom code
+needed.
+
+The script is at: `scripts/manage_knowledge.py`
+
+### List all content
+
+```bash
+uv run scripts/manage_knowledge.py --base-url http://localhost:7777
+```
+
+### Search the knowledge base
+
+```bash
+uv run scripts/manage_knowledge.py --base-url http://localhost:7777 \
+  --search "What is Agno?" --limit 5
+```
+
+### Upload a text file
+
+```bash
+uv run scripts/manage_knowledge.py --base-url http://localhost:7777 \
+  --upload README.md
+```
+
+### Upload raw text
+
+```bash
+uv run scripts/manage_knowledge.py --base-url http://localhost:7777 \
+  --upload-text "Agno is an AI agent framework" --name "Agno Intro"
+```
+
+### Check processing status
+
+```bash
+uv run scripts/manage_knowledge.py --base-url http://localhost:7777 \
+  --status content-id-123
+```
+
+### Delete specific content
+
+```bash
+uv run scripts/manage_knowledge.py --base-url http://localhost:7777 \
+  --delete content-id-123
+```
+
+### Full CLI reference
+
+```
+uv run scripts/manage_knowledge.py --help
+```
+
+## When to Write Custom Python
+
+Only write ad-hoc Python when the CLI script cannot handle your use case:
+
+- **Get knowledge config** (readers, chunkers, embedder info)
+- **Pagination and sorting** when listing content
+- **Update content metadata** (name, description)
+- **Delete all content** at once
+- **Chaining multiple operations** in a single script (e.g., upload then search)
+- **Custom error handling** or retry logic
+- **Integration tests** that assert on response content
+
 ## API Endpoints
 
 | Method | Path | Description |
@@ -69,7 +135,9 @@ agent_os.serve()
 | DELETE | `/knowledge/content` | Delete all content |
 | DELETE | `/knowledge/content/{content_id}` | Delete content by ID |
 
-## Get Knowledge Config
+## Custom Python Examples
+
+### Get Knowledge Config
 
 ```python
 import asyncio
@@ -85,33 +153,7 @@ async def main():
 asyncio.run(main())
 ```
 
-## Upload Text Content
-
-```python
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    result = await client.upload_knowledge_content(
-        text_content="Agno is a framework for building AI agents and teams.",
-        name="Agno Overview",
-        description="Overview of the Agno framework",
-    )
-
-    print(f"Content ID: {result.id}")
-    print(f"Status: {result.status}")
-```
-
-## Check Content Processing Status
-
-Content is processed asynchronously. Check status after uploading:
-
-```python
-status = await client.get_content_status(content_id)
-print(f"Status: {status.status}")
-print(f"Message: {status.status_message}")
-```
-
-## List Content
+### List Content with Pagination
 
 ```python
 async def main():
@@ -126,25 +168,7 @@ async def main():
 
 Supports pagination via `limit` and `page` parameters, and sorting via `sort_by` and `sort_order`.
 
-## Search Knowledge Base
-
-```python
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    results = await client.search_knowledge(
-        query="What is Agno?",
-        limit=5,
-    )
-
-    print(f"Found {len(results.data)} results")
-    for result in results.data:
-        preview = str(result.content)[:100] if hasattr(result, "content") else "N/A"
-        score = result.score if hasattr(result, "score") else "N/A"
-        print(f"  Score: {score} — {preview}...")
-```
-
-## Update Content Metadata
+### Update Content Metadata
 
 ```python
 updated = await client.update_content(
@@ -154,17 +178,13 @@ updated = await client.update_content(
 )
 ```
 
-## Delete Content
+### Delete All Content
 
 ```python
-# Delete specific content
-await client.delete_content("content-id-here")
-
-# Delete all content
 await client.delete_all_content()
 ```
 
-## Full Upload and Search Workflow
+### Full Upload and Search Workflow
 
 ```python
 import asyncio
@@ -203,6 +223,7 @@ asyncio.run(main())
 
 ## Anti-Patterns
 
+- **Don't write custom Python for basic operations** — use the CLI script for listing, uploading, searching, status checks, and deleting
 - **Don't forget `contents_db=` on Knowledge** — required for upload/management endpoints
 - **Don't forget `knowledge=[...]` on AgentOS** — registers knowledge API endpoints
 - **Don't assume instant processing** — content is processed asynchronously; check status

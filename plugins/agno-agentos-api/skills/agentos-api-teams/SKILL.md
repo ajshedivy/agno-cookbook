@@ -1,46 +1,96 @@
 ---
 name: agentos-api-teams
 description: |
-  Interact with AgentOS Team API endpoints using the AgentOSClient SDK.
-  Use this skill to write ad-hoc Python scripts, tests, and automation
-  for listing teams, running teams (streaming and non-streaming), and
-  cancelling team runs. Trigger when: importing AgentOSClient to work
-  with teams, writing scripts to run teams remotely, creating team tests,
-  or asking things like "what teams do I have configured?" or "run a
-  task on my research team."
+  Interact with AgentOS Team API endpoints. For standard operations
+  (listing teams, running teams, streaming), use the provided CLI
+  script first. Only write custom Python when the script cannot handle
+  the use case (e.g., cancellation, chaining multiple calls, custom
+  error handling). Trigger when: running teams remotely, listing teams,
+  creating team tests, or asking things like "what teams do I have
+  configured?" or "run a task on my research team."
 license: Apache-2.0
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: agno-team
   tags: ["agentos", "teams", "api", "client", "agno"]
 ---
 
 # AgentOS Teams API
 
-Use `agno.client.AgentOSClient` to list, inspect, and run teams on a remote AgentOS instance. Only requires `uv` — all dependencies are declared inline via PEP 723.
-
 ## Prerequisites
 
 Start an AgentOS server with teams configured:
 
-```python
-from agno.agent import Agent
-from agno.models.anthropic import Claude
-from agno.team.team import Team
-from agno.os import AgentOS
-
-assistant = Agent(name="Assistant", model=Claude(id="claude-sonnet-4-5"))
-researcher = Agent(name="Researcher", model=Claude(id="claude-sonnet-4-5"))
-
-team = Team(
-    name="Research Team",
-    model=Claude(id="claude-sonnet-4-5"),
-    members=[assistant, researcher],
-)
-
-agent_os = AgentOS(agents=[assistant, researcher], teams=[team])
-agent_os.serve()
+```bash
+export ANTHROPIC_API_KEY=sk-...
+uv run start_agentos.py  # See agno-agentos skill
 ```
+
+## Default: Use the CLI Script
+
+**Always try the provided script first.** It covers listing teams, running
+teams (streaming and non-streaming), and session persistence — all from the
+command line with no custom code needed.
+
+The script is at: `scripts/run_teams.py`
+
+### List all teams
+
+```bash
+uv run scripts/run_teams.py --base-url http://localhost:7777
+```
+
+### Run a team with a message
+
+```bash
+uv run scripts/run_teams.py --base-url http://localhost:7777 \
+  --team-id research-team \
+  -m "Compare Python and Rust"
+```
+
+### Stream a response
+
+```bash
+uv run scripts/run_teams.py --base-url http://localhost:7777 \
+  --team-id research-team \
+  -m "Analyze Tesla stock" --stream
+```
+
+### Persistent sessions
+
+```bash
+uv run scripts/run_teams.py --base-url http://localhost:7777 \
+  --team-id research-team \
+  -m "Analyze NVIDIA" --session-id research-1
+
+uv run scripts/run_teams.py --base-url http://localhost:7777 \
+  --team-id research-team \
+  -m "Now compare to AMD" --session-id research-1
+```
+
+### Run against a remote server
+
+```bash
+uv run scripts/run_teams.py --base-url http://my-server:8000 \
+  -m "Research AI trends"
+```
+
+### Full CLI reference
+
+```
+uv run scripts/run_teams.py --help
+```
+
+## When to Write Custom Python
+
+Only write ad-hoc Python when the CLI script cannot handle your use case:
+
+- **Cancel a team run** mid-execution
+- **Chaining multiple team calls** in a single script
+- **Custom error handling** or retry logic
+- **Programmatic inspection** of team config (members, model, description)
+- **Integration tests** that assert on response content
+- **Authentication** with custom headers (e.g., JWT tokens)
 
 ## API Endpoints
 
@@ -51,77 +101,9 @@ agent_os.serve()
 | POST | `/teams/{team_id}/runs` | Create team run |
 | POST | `/teams/{team_id}/cancel_run` | Cancel team run |
 
-## List All Teams
+## Custom Python Examples
 
-```python
-import asyncio
-from agno.client import AgentOSClient
-
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    config = await client.aget_config()
-    for team in config.teams or []:
-        print(f"Team: {team.id} — {team.name}")
-
-asyncio.run(main())
-```
-
-## Run Team (Non-Streaming)
-
-```python
-import asyncio
-from agno.client import AgentOSClient
-
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    config = await client.aget_config()
-    if not config.teams:
-        print("No teams available")
-        return
-
-    team_id = config.teams[0].id
-
-    result = await client.run_team(
-        team_id=team_id,
-        message="Research and summarize quantum computing advances.",
-        user_id="user-123",
-        session_id="team-session-1",
-    )
-
-    print(f"Run ID: {result.run_id}")
-    print(f"Content: {result.content}")
-
-asyncio.run(main())
-```
-
-## Run Team (Streaming)
-
-```python
-import asyncio
-from agno.client import AgentOSClient
-from agno.run.team import RunContentEvent, RunCompletedEvent
-
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    config = await client.aget_config()
-    team_id = config.teams[0].id
-
-    async for event in client.run_team_stream(
-        team_id=team_id,
-        message="Compare Python and Rust for backend development.",
-    ):
-        if isinstance(event, RunContentEvent):
-            print(event.content, end="", flush=True)
-        elif isinstance(event, RunCompletedEvent):
-            print(f"\nDone! Run ID: {event.run_id}")
-
-asyncio.run(main())
-```
-
-## Cancel Team Run
+### Cancel Team Run
 
 ```python
 await client.cancel_team_run(
@@ -130,29 +112,9 @@ await client.cancel_team_run(
 )
 ```
 
-## Team Run with Session Persistence
+### Authentication
 
-```python
-session_id = "team-research-session"
-
-# First message
-result1 = await client.run_team(
-    team_id=team_id,
-    message="Analyze Tesla's market position.",
-    session_id=session_id,
-    user_id="analyst",
-)
-
-# Second message — team remembers context
-result2 = await client.run_team(
-    team_id=team_id,
-    message="Now compare that to Rivian.",
-    session_id=session_id,
-    user_id="analyst",
-)
-```
-
-## Authentication
+When the AgentOS instance has a security key configured:
 
 ```python
 result = await client.run_team(
@@ -162,12 +124,27 @@ result = await client.run_team(
 )
 ```
 
+### Error Handling
+
+```python
+from agno.client import AgentOSClient, RemoteServerUnavailableError
+
+try:
+    client = AgentOSClient(base_url="http://localhost:7777")
+    config = await client.aget_config()
+except RemoteServerUnavailableError as e:
+    print(f"Server unavailable: {e.message}")
+    print(f"URL: {e.base_url}")
+```
+
 ## Anti-Patterns
 
+- **Don't write custom Python for basic list/run operations** — use the CLI script
 - **Don't forget `await`** — all client methods are async
-- **Don't hardcode team IDs** — discover them from `aget_config()`
+- **Don't hardcode team IDs** — discover them from `aget_config()` or the CLI script
 - **Don't confuse team and agent imports** — teams use `from agno.run.team import RunContentEvent`
-- **Don't skip config check** — verify `config.teams` is not empty before running
+- **Don't skip discovery** — always call `aget_config()` first to verify teams exist
+- **Don't forget the server** — start AgentOS before running client code
 
 ## Further Reading
 

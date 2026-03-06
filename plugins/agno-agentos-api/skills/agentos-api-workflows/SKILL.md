@@ -1,23 +1,21 @@
 ---
 name: agentos-api-workflows
 description: |
-  Interact with AgentOS Workflow API endpoints using the AgentOSClient SDK.
-  Use this skill to write ad-hoc Python scripts, tests, and automation
-  for listing workflows, running workflows (streaming and non-streaming),
-  and handling workflow events. Trigger when: importing AgentOSClient to
-  work with workflows, writing scripts to run workflows remotely, creating
-  workflow tests, or asking things like "what workflows do I have?" or
-  "run my content pipeline workflow."
+  Interact with AgentOS Workflow API endpoints. For standard operations
+  (listing workflows, running workflows, streaming), use the provided CLI
+  script first. Only write custom Python when the script cannot handle
+  the use case (e.g., custom event handling, chaining multiple workflow
+  calls, error handling with retries). Trigger when: running workflows
+  remotely, listing workflows, creating workflow tests, or asking things
+  like "what workflows do I have?" or "run my content pipeline workflow."
 license: Apache-2.0
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: agno-team
   tags: ["agentos", "workflows", "api", "client", "agno"]
 ---
 
 # AgentOS Workflows API
-
-Use `agno.client.AgentOSClient` to list and run workflows on a remote AgentOS instance. Only requires `uv` — all dependencies are declared inline via PEP 723.
 
 ## Prerequisites
 
@@ -45,6 +43,59 @@ agent_os = AgentOS(agents=[assistant], workflows=[workflow])
 agent_os.serve()
 ```
 
+## Default: Use the CLI Script
+
+**Always try the provided script first.** It covers listing workflows, running
+workflows (streaming and non-streaming), and auto-selecting the first workflow —
+all from the command line with no custom code needed.
+
+The script is at: `scripts/run_workflows.py`
+
+### List all workflows
+
+```bash
+uv run scripts/run_workflows.py --base-url http://localhost:7777
+```
+
+### Run a specific workflow
+
+```bash
+uv run scripts/run_workflows.py --base-url http://localhost:7777 \
+  --workflow-id qa-workflow \
+  -m "Explain machine learning"
+```
+
+### Stream a workflow response
+
+```bash
+uv run scripts/run_workflows.py --base-url http://localhost:7777 \
+  -m "Analyze AI trends" --stream
+```
+
+### Run against a remote server
+
+```bash
+uv run scripts/run_workflows.py --base-url http://my-server:8000 \
+  -m "Process this request"
+```
+
+### Full CLI reference
+
+```
+uv run scripts/run_workflows.py --help
+```
+
+## When to Write Custom Python
+
+Only write ad-hoc Python when the CLI script cannot handle your use case:
+
+- **Custom event handling** beyond printing content (e.g., aggregating step results)
+- **Chaining multiple workflow calls** in a single script
+- **Custom error handling** or retry logic
+- **Authentication** with custom headers
+- **Programmatic inspection** of workflow config (steps, agents)
+- **Integration tests** that assert on response content
+
 ## API Endpoints
 
 | Method | Path | Description |
@@ -53,79 +104,6 @@ agent_os.serve()
 | GET | `/workflows/{workflow_id}` | Get workflow details |
 | POST | `/workflows/{workflow_id}/runs` | Create workflow run |
 
-## List All Workflows
-
-```python
-import asyncio
-from agno.client import AgentOSClient
-
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    config = await client.aget_config()
-    for wf in config.workflows or []:
-        print(f"Workflow: {wf.id} — {wf.name}")
-
-asyncio.run(main())
-```
-
-## Run Workflow (Non-Streaming)
-
-```python
-import asyncio
-from agno.client import AgentOSClient
-
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    config = await client.aget_config()
-    if not config.workflows:
-        print("No workflows available")
-        return
-
-    workflow_id = config.workflows[0].id
-
-    result = await client.run_workflow(
-        workflow_id=workflow_id,
-        message="What are the benefits of using Python for data science?",
-    )
-
-    print(f"Run ID: {result.run_id}")
-    print(f"Content: {result.content}")
-
-asyncio.run(main())
-```
-
-## Run Workflow (Streaming)
-
-Workflow streaming returns `WorkflowRunOutputEvent` objects with different event types:
-
-```python
-import asyncio
-from agno.client import AgentOSClient
-
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    config = await client.aget_config()
-    workflow_id = config.workflows[0].id
-
-    async for event in client.run_workflow_stream(
-        workflow_id=workflow_id,
-        message="Explain machine learning in simple terms.",
-    ):
-        # Handle content from agent events
-        if event.event == "RunContent" and hasattr(event, "content"):
-            print(event.content, end="", flush=True)
-        # Handle workflow step completion
-        elif event.event == "WorkflowAgentCompleted" and hasattr(event, "content") and event.content:
-            print(event.content, end="", flush=True)
-
-    print()
-
-asyncio.run(main())
-```
-
 ## Workflow Event Types
 
 | Event | Description |
@@ -133,7 +111,9 @@ asyncio.run(main())
 | `RunContent` | Streamed content chunk from an agent step |
 | `WorkflowAgentCompleted` | An agent step within the workflow completed |
 
-## Error Handling
+## Custom Python Examples
+
+### Error Handling
 
 ```python
 try:
@@ -148,7 +128,9 @@ except Exception as e:
         print(f"Response: {e.response.text}")
 ```
 
-## Authentication
+### Authentication
+
+When the AgentOS instance has a security key configured:
 
 ```python
 result = await client.run_workflow(
@@ -160,8 +142,9 @@ result = await client.run_workflow(
 
 ## Anti-Patterns
 
+- **Don't write custom Python for basic operations** — use the CLI script
 - **Don't forget `await`** — all client methods are async
-- **Don't hardcode workflow IDs** — discover them from `aget_config()`
+- **Don't hardcode workflow IDs** — discover them from `aget_config()` or the CLI script
 - **Don't confuse event types** — workflow streaming uses `event.event` string checks, not `isinstance()`
 - **Don't ignore error responses** — workflows can fail at individual steps; check for errors
 

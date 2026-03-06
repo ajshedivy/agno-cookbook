@@ -1,16 +1,17 @@
 ---
 name: agentos-api-memory
 description: |
-  Interact with AgentOS Memory API endpoints using the AgentOSClient SDK.
-  Use this skill to write ad-hoc Python scripts, tests, and automation
-  for creating, listing, getting, updating, and deleting user memories,
-  plus retrieving memory topics and stats. Trigger when: importing
-  AgentOSClient to work with memories, writing scripts to manage user
-  preferences, creating memory tests, or asking things like "what
-  memories does this user have?" or "add a preference for dark mode."
+  Interact with AgentOS Memory API endpoints. For standard operations
+  (listing, creating, updating, deleting memories, searching, topics),
+  use the provided CLI script first. Only write custom Python when the
+  script cannot handle the use case (e.g., advanced filtering, stats,
+  chaining multiple calls, integration tests). Trigger when: managing
+  user memories, writing scripts to manage user preferences, creating
+  memory tests, or asking things like "what memories does this user
+  have?" or "add a preference for dark mode."
 license: Apache-2.0
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: agno-team
   tags: ["agentos", "memory", "api", "client", "agno"]
 ---
@@ -43,6 +44,81 @@ agent_os = AgentOS(agents=[agent])
 agent_os.serve()
 ```
 
+## Default: Use the CLI Script
+
+**Always try the provided script first.** It covers listing, searching,
+creating, updating, and deleting memories — plus listing topics — all from
+the command line with no custom code needed.
+
+The script is at: `scripts/manage_memories.py`
+
+### List all memories for a user
+
+```bash
+uv run scripts/manage_memories.py --user-id alice@example.com
+```
+
+### Search memories by content
+
+```bash
+uv run scripts/manage_memories.py --user-id alice --search "dark mode"
+```
+
+### Create a new memory
+
+```bash
+uv run scripts/manage_memories.py --user-id alice \
+  --create "User prefers dark mode" --topics preferences,ui
+```
+
+### Get a specific memory
+
+```bash
+uv run scripts/manage_memories.py --memory-id abc-123 --user-id alice
+```
+
+### Update a memory
+
+```bash
+uv run scripts/manage_memories.py --memory-id abc-123 --user-id alice \
+  --update "User strongly prefers dark mode" --topics preferences,ui,accessibility
+```
+
+### Delete a memory
+
+```bash
+uv run scripts/manage_memories.py --memory-id abc-123 --user-id alice --delete
+```
+
+### List all memory topics
+
+```bash
+uv run scripts/manage_memories.py --topics-list
+```
+
+### Use a different server
+
+```bash
+uv run scripts/manage_memories.py --base-url http://my-server:8000 --user-id alice
+```
+
+### Full CLI reference
+
+```
+uv run scripts/manage_memories.py --help
+```
+
+## When to Write Custom Python
+
+Only write ad-hoc Python when the CLI script cannot handle your use case:
+
+- **Advanced list filtering** (by `agent_id`, `team_id`, topic filters, pagination, sorting)
+- **Memory stats** (`get_user_memory_stats`)
+- **Chaining multiple memory calls** in a single script
+- **Custom error handling** or retry logic
+- **Integration tests** that assert on memory content
+- **Programmatic lifecycle orchestration** (create-then-update flows)
+
 ## API Endpoints
 
 | Method | Path | Description |
@@ -55,7 +131,11 @@ agent_os.serve()
 | PATCH | `/memories/{memory_id}` | Update a memory |
 | DELETE | `/memories/{memory_id}` | Delete a memory |
 
-## Create a Memory
+## Custom Python Examples
+
+### List Memories with Advanced Filtering
+
+The list endpoint supports filtering beyond what the CLI provides:
 
 ```python
 import asyncio
@@ -64,79 +144,24 @@ from agno.client import AgentOSClient
 async def main():
     client = AgentOSClient(base_url="http://localhost:7777")
 
-    memory = await client.create_memory(
-        memory="User prefers dark mode for all applications",
+    memories = await client.list_memories(
         user_id="user-123",
-        topics=["preferences", "ui"],
+        agent_id="my-agent",
+        topics="preferences,ui",
+        limit=50,
+        page=2,
+        sort_by="created_at",
+        sort_order="asc",
     )
-
-    print(f"Memory ID: {memory.memory_id}")
-    print(f"Content: {memory.memory}")
-    print(f"Topics: {memory.topics}")
-
-asyncio.run(main())
-```
-
-## List Memories
-
-```python
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    memories = await client.list_memories(user_id="user-123")
     print(f"Found {len(memories.data)} memories")
 
     for mem in memories.data:
         print(f"  {mem.memory_id}: {mem.memory}")
+
+asyncio.run(main())
 ```
 
-The list endpoint supports filtering by:
-- `user_id`: Filter by user
-- `agent_id`: Filter by agent
-- `team_id`: Filter by team
-- `search_content`: Fuzzy search within memory content
-- `topics`: Comma-separated topic filters
-- `limit`, `page`: Pagination (default: 20 per page)
-- `sort_by`, `sort_order`: Sorting (default: `updated_at` desc)
-
-## Get a Specific Memory
-
-```python
-retrieved = await client.get_memory("memory-id-here", user_id="user-123")
-print(f"Memory: {retrieved.memory}")
-print(f"Topics: {retrieved.topics}")
-```
-
-## Update a Memory
-
-```python
-updated = await client.update_memory(
-    memory_id="memory-id-here",
-    memory="User strongly prefers dark mode for all applications and websites",
-    user_id="user-123",
-    topics=["preferences", "ui", "accessibility"],
-)
-
-print(f"Updated: {updated.memory}")
-print(f"Topics: {updated.topics}")
-```
-
-## Delete a Memory
-
-```python
-await client.delete_memory("memory-id-here", user_id="user-123")
-```
-
-## Get Memory Topics
-
-Retrieve all unique topics across all memories:
-
-```python
-topics = await client.get_memory_topics()
-print(f"All topics: {topics}")
-```
-
-## Get User Memory Stats
+### Get User Memory Stats
 
 Retrieve aggregated memory statistics:
 
@@ -145,7 +170,9 @@ stats = await client.get_user_memory_stats()
 print(f"Stats: {len(stats.data)} entries")
 ```
 
-## Full Memory Lifecycle
+### Full Memory Lifecycle (Programmatic)
+
+Chain multiple calls when you need create-then-verify flows:
 
 ```python
 import asyncio
@@ -190,6 +217,7 @@ asyncio.run(main())
 
 ## Anti-Patterns
 
+- **Don't write custom Python for basic operations** — use the CLI script
 - **Don't forget `user_id`** — memories are scoped to users
 - **Don't skip topics** — topics enable filtering and categorization
 - **Don't store conversation content as memories** — use sessions for that

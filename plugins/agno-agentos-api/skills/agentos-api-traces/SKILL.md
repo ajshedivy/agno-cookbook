@@ -2,15 +2,17 @@
 name: agentos-api-traces
 description: |
   Interact with AgentOS Traces API endpoints using the AgentOSClient SDK.
-  Use this skill to write ad-hoc Python scripts, tests, and automation
-  for listing traces, getting trace details, and retrieving trace
-  statistics by session. Trigger when: importing AgentOSClient to work
-  with traces, writing scripts to debug agent runs, creating trace tests,
-  or asking things like "show me the traces from my last agent run" or
-  "how many tokens did my agent use?"
+  For standard operations (listing traces, getting trace details, viewing
+  stats), use the provided CLI script first. Only write custom Python when
+  the script cannot handle the use case (e.g., debugging workflows that
+  chain agent runs with trace inspection, custom filtering, or integration
+  tests). Trigger when: importing AgentOSClient to work with traces,
+  writing scripts to debug agent runs, creating trace tests, or asking
+  things like "show me the traces from my last agent run" or "how many
+  tokens did my agent use?"
 license: Apache-2.0
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: agno-team
   tags: ["agentos", "traces", "tracing", "api", "client", "agno"]
 ---
@@ -43,6 +45,55 @@ agent_os = AgentOS(
 agent_os.serve()
 ```
 
+## Default: Use the CLI Script
+
+**Always try the provided script first.** It covers listing traces, getting
+trace details, and viewing session statistics — all from the command line
+with no custom code needed.
+
+The script is at: `scripts/view_traces.py`
+
+### List recent traces
+
+```bash
+uv run scripts/view_traces.py --base-url http://localhost:7777
+```
+
+### Limit the number of traces shown
+
+```bash
+uv run scripts/view_traces.py --base-url http://localhost:7777 --limit 5
+```
+
+### Get detailed info for a specific trace
+
+```bash
+uv run scripts/view_traces.py --base-url http://localhost:7777 \
+  --trace-id abc-123
+```
+
+### View trace statistics grouped by session
+
+```bash
+uv run scripts/view_traces.py --base-url http://localhost:7777 --stats
+```
+
+### Full CLI reference
+
+```
+uv run scripts/view_traces.py --help
+```
+
+## When to Write Custom Python
+
+Only write ad-hoc Python when the CLI script cannot handle your use case:
+
+- **Debugging workflows** that chain agent runs with trace inspection
+- **Custom filtering** by user_id, pagination, or sorting
+- **Programmatic span inspection** (e.g., summing token usage across spans)
+- **Integration tests** that assert on trace content
+- **Automated monitoring** with custom retry or polling logic
+
 ## API Endpoints
 
 | Method | Path | Description |
@@ -51,78 +102,11 @@ agent_os.serve()
 | GET | `/traces/{trace_id}` | Get trace or span detail |
 | GET | `/traces/stats/sessions` | Get trace statistics by session |
 
-## List Traces
+## Custom Python Examples
 
-```python
-import asyncio
-from agno.client import AgentOSClient
+### Using Traces for Debugging
 
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    traces = await client.list_traces()
-    print(f"Found {len(traces.data)} traces")
-
-    for trace in traces.data:
-        print(f"  Trace ID: {trace.trace_id}")
-        print(f"  Agent: {trace.agent_id}")
-        print(f"  Session: {trace.session_id}")
-        print(f"  Created: {trace.created_at}")
-
-asyncio.run(main())
-```
-
-Traces provide insight into:
-- **Agent execution flows** — the sequence of steps an agent takes
-- **Model invocations and token usage** — which models were called and how many tokens were used
-- **Tool calls and their results** — which tools were invoked and what they returned
-- **Errors and performance bottlenecks** — where things went wrong or slowed down
-
-## Get Trace Detail
-
-Retrieve the full hierarchy of a specific trace including all spans:
-
-```python
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    trace = await client.get_trace("trace-id-here")
-    print(f"Trace ID: {trace.trace_id}")
-    print(f"Agent: {trace.agent_id}")
-    print(f"Duration: {trace.duration_ms}ms")
-
-    # Inspect spans within the trace
-    if hasattr(trace, "spans") and trace.spans:
-        for span in trace.spans:
-            print(f"  Span: {span.name}")
-            print(f"    Duration: {span.duration_ms}ms")
-            print(f"    Tokens: {span.total_tokens}")
-```
-
-## Get Trace Statistics by Session
-
-Retrieve aggregated trace statistics grouped by session ID:
-
-```python
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    stats = await client.get_trace_stats_by_session()
-    print(f"Found stats for {len(stats.data)} sessions")
-
-    for entry in stats.data:
-        print(f"  Session: {entry.session_id}")
-        print(f"    Total traces: {entry.total_traces}")
-        print(f"    First trace: {entry.first_trace_at}")
-        print(f"    Last trace: {entry.last_trace_at}")
-```
-
-Supports filtering by:
-- `user_id`: Filter by user
-- `limit`, `page`: Pagination
-- `sort_by`, `sort_order`: Sorting
-
-## Using Traces for Debugging
+Chain an agent run with trace inspection to debug execution:
 
 ```python
 import asyncio
@@ -155,8 +139,33 @@ async def debug_agent_run():
 asyncio.run(debug_agent_run())
 ```
 
+### Custom Filtering and Pagination
+
+Supports filtering by:
+- `user_id`: Filter by user
+- `limit`, `page`: Pagination
+- `sort_by`, `sort_order`: Sorting
+
+### Programmatic Span Inspection
+
+Sum token usage across all spans in a trace:
+
+```python
+async def total_tokens(client: AgentOSClient, trace_id: str) -> int:
+    trace = await client.get_trace(trace_id)
+    spans = getattr(trace, "spans", None) or []
+    return sum(getattr(s, "total_tokens", 0) or 0 for s in spans)
+```
+
+Traces provide insight into:
+- **Agent execution flows** — the sequence of steps an agent takes
+- **Model invocations and token usage** — which models were called and how many tokens were used
+- **Tool calls and their results** — which tools were invoked and what they returned
+- **Errors and performance bottlenecks** — where things went wrong or slowed down
+
 ## Anti-Patterns
 
+- **Don't write custom Python for basic operations** — use the CLI script
 - **Don't forget `tracing=True`** on AgentOS — tracing must be explicitly enabled
 - **Don't poll traces in tight loops** — use reasonable intervals when monitoring
 - **Don't ignore token usage** — traces are valuable for cost monitoring

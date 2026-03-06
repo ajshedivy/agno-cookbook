@@ -1,16 +1,17 @@
 ---
 name: agentos-api-sessions
 description: |
-  Interact with AgentOS Session API endpoints using the AgentOSClient SDK.
-  Use this skill to write ad-hoc Python scripts, tests, and automation
-  for creating, listing, getting, renaming, and deleting sessions, plus
-  retrieving session runs. Trigger when: importing AgentOSClient to work
-  with sessions, writing scripts to query session history, creating
-  session tests, or asking things like "find me all sessions from the
-  researcher agent" or "get the latest runs from session X."
+  Interact with AgentOS Session API endpoints. For standard operations
+  (listing, creating, renaming, deleting sessions, viewing runs), use
+  the provided CLI script first. Only write custom Python when the script
+  cannot handle the use case (e.g., persistent conversations, clearing
+  history, bulk deletion, advanced filtering). Trigger when: managing
+  sessions remotely, inspecting session history, creating session tests,
+  or asking things like "find me all sessions from the researcher agent"
+  or "get the latest runs from session X."
 license: Apache-2.0
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: agno-team
   tags: ["agentos", "sessions", "api", "client", "agno"]
 ---
@@ -42,6 +43,88 @@ agent_os = AgentOS(agents=[agent])
 agent_os.serve()
 ```
 
+## Default: Use the CLI Script
+
+**Always try the provided script first.** It covers listing sessions, creating
+sessions, inspecting session details, viewing runs, renaming, and deleting —
+all from the command line with no custom code needed.
+
+The script is at: `scripts/manage_sessions.py`
+
+### List all sessions
+
+```bash
+uv run scripts/manage_sessions.py --base-url http://localhost:7777
+```
+
+### List sessions for a specific agent
+
+```bash
+uv run scripts/manage_sessions.py --base-url http://localhost:7777 \
+  --agent-id researcher
+```
+
+### List sessions for a specific user
+
+```bash
+uv run scripts/manage_sessions.py --base-url http://localhost:7777 \
+  --user-id alice@example.com
+```
+
+### Inspect a session
+
+```bash
+uv run scripts/manage_sessions.py --base-url http://localhost:7777 \
+  --session-id abc-123
+```
+
+### Show runs inside a session
+
+```bash
+uv run scripts/manage_sessions.py --base-url http://localhost:7777 \
+  --session-id abc-123 --show-runs
+```
+
+### Create a new session
+
+```bash
+uv run scripts/manage_sessions.py --base-url http://localhost:7777 \
+  --create --agent-id my-agent --user-id alice --name "Research Chat"
+```
+
+### Rename a session
+
+```bash
+uv run scripts/manage_sessions.py --base-url http://localhost:7777 \
+  --session-id abc-123 --rename "New Name"
+```
+
+### Delete a session
+
+```bash
+uv run scripts/manage_sessions.py --base-url http://localhost:7777 \
+  --session-id abc-123 --delete
+```
+
+### Full CLI reference
+
+```
+uv run scripts/manage_sessions.py --help
+```
+
+## When to Write Custom Python
+
+Only write ad-hoc Python when the CLI script cannot handle your use case:
+
+- **Persistent conversations** (running an agent within a session across multiple messages)
+- **Clearing session history** while keeping the session intact
+- **Bulk deletion** of multiple sessions at once
+- **Advanced filtering** (by type, session name, sorting, pagination)
+- **Updating session metadata** (PATCH endpoint)
+- **Fetching a specific run** by run ID
+- **Custom error handling** or retry logic
+- **Integration tests** that assert on session or run content
+
 ## API Endpoints
 
 | Method | Path | Description |
@@ -57,80 +140,14 @@ agent_os.serve()
 | POST | `/sessions/{session_id}/clear` | Clear session history |
 | DELETE | `/sessions` | Delete multiple sessions |
 
-## Create a Session
+## Custom Python Examples
+
+### Use Sessions for Persistent Conversations
 
 ```python
 import asyncio
 from agno.client import AgentOSClient
 
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    config = await client.aget_config()
-    agent_id = config.agents[0].id
-
-    session = await client.create_session(
-        agent_id=agent_id,
-        user_id="user-123",
-        session_name="My Research Session",
-    )
-
-    print(f"Session ID: {session.session_id}")
-    print(f"Session Name: {session.session_name}")
-
-asyncio.run(main())
-```
-
-## List Sessions
-
-```python
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    sessions = await client.get_sessions(user_id="user-123")
-    print(f"Found {len(sessions.data)} sessions")
-
-    for sess in sessions.data:
-        print(f"  {sess.session_id}: {sess.session_name or 'Unnamed'}")
-```
-
-The list endpoint supports filtering by:
-- `type`: Session type — `agent`, `team`, or `workflow`
-- `component_id`: Filter by agent/team/workflow ID
-- `user_id`: Filter by user
-- `session_name`: Partial name match
-- `limit`, `page`: Pagination (default: 20 per page)
-- `sort_by`, `sort_order`: Sorting (default: `created_at` desc)
-
-## Get Session Details
-
-```python
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    details = await client.get_session("session-id-here")
-    print(f"Agent: {details.agent_id}")
-    print(f"User: {details.user_id}")
-    print(f"State: {details.session_state}")
-```
-
-## Get Session Runs
-
-```python
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    runs = await client.get_session_runs(session_id="session-id-here")
-    print(f"Found {len(runs)} runs")
-
-    for run in runs:
-        preview = (str(run.content)[:50] + "...") if run.content else "N/A"
-        print(f"  {run.run_id}: {preview}")
-```
-
-## Use Sessions for Persistent Conversations
-
-```python
 async def main():
     client = AgentOSClient(base_url="http://localhost:7777")
     config = await client.aget_config()
@@ -151,19 +168,11 @@ async def main():
         session_id=session_id,
     )
     print(result2.content)  # Should mention Alice
+
+asyncio.run(main())
 ```
 
-## Rename a Session
-
-```python
-renamed = await client.rename_session(
-    session_id="session-id-here",
-    session_name="New Session Name",
-)
-print(f"Renamed to: {renamed.session_name}")
-```
-
-## Clear Session History
+### Clear Session History
 
 Erase all conversation history while keeping the session:
 
@@ -171,15 +180,29 @@ Erase all conversation history while keeping the session:
 await client.clear_session("session-id-here")
 ```
 
-## Delete a Session
+### Advanced Filtering
+
+The list endpoint supports filtering beyond what the CLI provides:
 
 ```python
-# Delete a single session (permanent — removes all runs)
-await client.delete_session("session-id-here")
+async def main():
+    client = AgentOSClient(base_url="http://localhost:7777")
+
+    sessions = await client.get_sessions(
+        type="agent",
+        session_name="Research",
+        sort_by="created_at",
+        sort_order="asc",
+        limit=50,
+        page=2,
+    )
+    for sess in sessions.data:
+        print(f"  {sess.session_id}: {sess.session_name or 'Unnamed'}")
 ```
 
 ## Anti-Patterns
 
+- **Don't write custom Python for basic operations** — use the CLI script for listing, creating, inspecting, renaming, and deleting sessions
 - **Don't forget `db=` on agents** — without storage, sessions don't persist between API calls
 - **Don't create sessions for every request** — use the same `session_id` for continuous conversations
 - **Don't forget `add_history_to_context=True`** — without it, agents won't recall prior messages

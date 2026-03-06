@@ -1,23 +1,21 @@
 ---
 name: agentos-api-agents
 description: |
-  Interact with AgentOS Agent API endpoints using the AgentOSClient SDK.
-  Use this skill to write ad-hoc Python scripts, tests, and automation
-  for listing agents, getting details, running agents (streaming and
-  non-streaming), cancelling runs, and continuing runs. Trigger when:
-  importing AgentOSClient to work with agents, writing scripts to run
-  agents remotely, creating agent tests, or asking things like "kick off
+  Interact with AgentOS Agent API endpoints. For standard operations
+  (listing agents, running agents, streaming), use the provided CLI
+  script first. Only write custom Python when the script cannot handle
+  the use case (e.g., structured output, dependencies, cancellation,
+  chaining multiple calls). Trigger when: running agents remotely,
+  listing agents, creating agent tests, or asking things like "kick off
   a run in my test agent" or "what agents do I have configured?"
 license: Apache-2.0
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: agno-team
   tags: ["agentos", "agents", "api", "client", "agno"]
 ---
 
 # AgentOS Agents API
-
-Use `agno.client.AgentOSClient` to list, inspect, and run agents on a remote AgentOS instance. Only requires `uv` — all dependencies are declared inline via PEP 723.
 
 ## Prerequisites
 
@@ -27,6 +25,73 @@ Start an AgentOS server first:
 export ANTHROPIC_API_KEY=sk-...
 uv run start_agentos.py  # See agno-agentos skill
 ```
+
+## Default: Use the CLI Script
+
+**Always try the provided script first.** It covers listing agents, running
+agents (streaming and non-streaming), session persistence, and dependencies —
+all from the command line with no custom code needed.
+
+The script is at: `scripts/run_agents.py`
+
+### List all agents
+
+```bash
+uv run scripts/run_agents.py --base-url http://localhost:8000
+```
+
+### Run an agent with a message
+
+```bash
+uv run scripts/run_agents.py --base-url http://localhost:8000 \
+  --agent-id my-agent \
+  -m "What is 2 + 2?"
+```
+
+### Stream a response
+
+```bash
+uv run scripts/run_agents.py --base-url http://localhost:8000 \
+  --agent-id my-agent \
+  -m "Tell me a joke" --stream
+```
+
+### Persistent sessions
+
+```bash
+uv run scripts/run_agents.py --base-url http://localhost:8000 \
+  --agent-id my-agent \
+  -m "My name is Alice" --session-id chat-1 --user-id alice
+
+uv run scripts/run_agents.py --base-url http://localhost:8000 \
+  --agent-id my-agent \
+  -m "What is my name?" --session-id chat-1 --user-id alice
+```
+
+### Pass dependencies to agent tools
+
+```bash
+uv run scripts/run_agents.py --base-url http://localhost:8000 \
+  --agent-id my-agent \
+  -m "Greet me" --dependencies '{"robot_name": "Anna"}'
+```
+
+### Full CLI reference
+
+```
+uv run scripts/run_agents.py --help
+```
+
+## When to Write Custom Python
+
+Only write ad-hoc Python when the CLI script cannot handle your use case:
+
+- **Structured output** (passing a JSON schema)
+- **Cancel or continue** a running agent
+- **Chaining multiple agent calls** in a single script
+- **Custom error handling** or retry logic
+- **Programmatic inspection** of agent config (tools, model, knowledge)
+- **Integration tests** that assert on response content
 
 ## API Endpoints
 
@@ -38,25 +103,14 @@ uv run start_agentos.py  # See agno-agentos skill
 | POST | `/agents/{agent_id}/cancel_run` | Cancel agent run |
 | POST | `/agents/{agent_id}/continue_run` | Continue agent run (resume with tool results) |
 
-## List All Agents
+## Custom Python Examples
+
+### Get Agent Details
 
 ```python
 import asyncio
 from agno.client import AgentOSClient
 
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    config = await client.aget_config()
-    for agent in config.agents or []:
-        print(f"Agent: {agent.id} — {agent.name}")
-
-asyncio.run(main())
-```
-
-## Get Agent Details
-
-```python
 async def main():
     client = AgentOSClient(base_url="http://localhost:7777")
 
@@ -66,104 +120,45 @@ async def main():
     print(f"Tools: {len(agent.tools or [])}")
     print(f"Knowledge: {agent.knowledge}")
     print(f"Memory: {agent.memory}")
+
+asyncio.run(main())
 ```
 
-## Run Agent (Non-Streaming)
+### Run Agent with Structured Output
 
 ```python
-import asyncio
+import asyncio, json
 from agno.client import AgentOSClient
 
 async def main():
     client = AgentOSClient(base_url="http://localhost:7777")
 
-    config = await client.aget_config()
-    agent_id = config.agents[0].id
+    output_schema = {
+        "type": "object",
+        "properties": {
+            "answer": {"type": "string"},
+            "confidence": {"type": "number"},
+        },
+        "required": ["answer", "confidence"],
+    }
 
     result = await client.run_agent(
-        agent_id=agent_id,
-        message="What is 2 + 2?",
-        user_id="user-123",          # Optional: for user-specific memory
-        session_id="session-456",    # Optional: for persistent conversations
+        agent_id="my-agent",
+        message="What is the capital of France?",
+        output_schema=json.dumps(output_schema),
     )
-
-    print(f"Run ID: {result.run_id}")
-    print(f"Content: {result.content}")
-    print(f"Tokens: {result.metrics.total_tokens if result.metrics else 'N/A'}")
+    print(result.content)
 
 asyncio.run(main())
 ```
 
-## Run Agent (Streaming)
+### Cancel Agent Run
 
 ```python
-import asyncio
-from agno.client import AgentOSClient
-from agno.run.agent import RunContentEvent, RunCompletedEvent
-
-async def main():
-    client = AgentOSClient(base_url="http://localhost:7777")
-
-    config = await client.aget_config()
-    agent_id = config.agents[0].id
-
-    async for event in client.run_agent_stream(
-        agent_id=agent_id,
-        message="Tell me a short joke.",
-        user_id="user-123",
-        session_id="session-456",
-    ):
-        if isinstance(event, RunContentEvent):
-            print(event.content, end="", flush=True)
-        elif isinstance(event, RunCompletedEvent):
-            print(f"\nDone! Run ID: {event.run_id}")
-
-asyncio.run(main())
-```
-
-## Run Agent with Dependencies
-
-Pass runtime parameters to agent tools via `dependencies`:
-
-```python
-result = await client.run_agent(
-    agent_id=agent_id,
-    message="What is my name?",
-    dependencies={"robot_name": "Anna"},
-)
-```
-
-## Run Agent with Structured Output
-
-Pass a JSON schema to enforce structured responses:
-
-```python
-import json
-
-output_schema = {
-    "type": "object",
-    "properties": {
-        "answer": {"type": "string"},
-        "confidence": {"type": "number"},
-    },
-    "required": ["answer", "confidence"],
-}
-
-result = await client.run_agent(
-    agent_id=agent_id,
-    message="What is the capital of France?",
-    output_schema=json.dumps(output_schema),
-)
-```
-
-## Cancel Agent Run
-
-```python
-# Cancel a running agent execution
 await client.cancel_agent_run(agent_id=agent_id)
 ```
 
-## Continue Agent Run
+### Continue Agent Run
 
 Resume a paused execution (e.g., after human-in-the-loop tool approval):
 
@@ -171,13 +166,11 @@ Resume a paused execution (e.g., after human-in-the-loop tool approval):
 await client.continue_agent_run(agent_id=agent_id)
 ```
 
-## Authentication
+### Authentication
 
 When the AgentOS instance has a security key configured:
 
 ```python
-client = AgentOSClient(base_url="http://localhost:7777")
-
 result = await client.run_agent(
     agent_id=agent_id,
     message="Hello",
@@ -185,7 +178,7 @@ result = await client.run_agent(
 )
 ```
 
-## Error Handling
+### Error Handling
 
 ```python
 from agno.client import AgentOSClient, RemoteServerUnavailableError
@@ -200,8 +193,9 @@ except RemoteServerUnavailableError as e:
 
 ## Anti-Patterns
 
+- **Don't write custom Python for basic list/run operations** — use the CLI script
 - **Don't forget `await`** — all client methods are async
-- **Don't hardcode agent IDs** — discover them from `aget_config()`
+- **Don't hardcode agent IDs** — discover them from `aget_config()` or the CLI script
 - **Don't skip discovery** — always call `aget_config()` first to verify agents exist
 - **Don't forget the server** — start AgentOS before running client code
 - **Don't ignore streaming events** — always handle both `RunContentEvent` and `RunCompletedEvent`
