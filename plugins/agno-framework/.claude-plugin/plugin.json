@@ -1,0 +1,5 @@
+{
+  "name": "agno-framework",
+  "description": "Build AI agents, teams, and workflows with the Agno framework — includes tools, knowledge, memory, storage, guardrails, reasoning, and multimodal support",
+  "version": "1.0.0"
+}
