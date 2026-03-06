@@ -43,11 +43,11 @@ Create a new agent run.
 - `RunContentEvent`: Content chunks (`event.content`)
 - `RunCompletedEvent`: Run finished (`event.run_id`)
 
-### POST /agents/{agent_id}/runs/{run_id}/cancel
+### POST /agents/{agent_id}/cancel_run
 Cancel a running agent execution. Attempts graceful stop.
 
-### POST /agents/{agent_id}/runs/continue
-Continue a previously paused agent run.
+### POST /agents/{agent_id}/continue_run
+Continue a previously paused agent run (e.g., resume with tool results after human-in-the-loop).
 
 ## AgentOSClient Methods
 

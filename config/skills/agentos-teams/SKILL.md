@@ -47,7 +47,7 @@ agent_os.serve()
 | GET | `/teams` | List all teams |
 | GET | `/teams/{team_id}` | Get team details |
 | POST | `/teams/{team_id}/runs` | Create team run |
-| POST | `/teams/{team_id}/runs/{run_id}/cancel` | Cancel team run |
+| POST | `/teams/{team_id}/cancel_run` | Cancel team run |
 
 ## List All Teams
 

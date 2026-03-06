@@ -36,7 +36,7 @@ Create a new team run.
 - `RunContentEvent`: Content chunks
 - `RunCompletedEvent`: Run finished
 
-### POST /teams/{team_id}/runs/{run_id}/cancel
+### POST /teams/{team_id}/cancel_run
 Cancel a running team execution. Attempts graceful stop.
 
 ## AgentOSClient Methods

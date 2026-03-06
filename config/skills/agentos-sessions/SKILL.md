@@ -53,6 +53,7 @@ agent_os.serve()
 | PATCH | `/sessions/{session_id}` | Update session |
 | POST | `/sessions/{session_id}/rename` | Rename session |
 | DELETE | `/sessions/{session_id}` | Delete session |
+| POST | `/sessions/{session_id}/clear` | Clear session history |
 | DELETE | `/sessions` | Delete multiple sessions |
 
 ## Create a Session
@@ -159,6 +160,14 @@ renamed = await client.rename_session(
     session_name="New Session Name",
 )
 print(f"Renamed to: {renamed.session_name}")
+```
+
+## Clear Session History
+
+Erase all conversation history while keeping the session:
+
+```python
+await client.clear_session("session-id-here")
 ```
 
 ## Delete a Session

@@ -35,8 +35,8 @@ python start_agentos.py  # See agno-agentos skill
 | GET | `/agents` | List all agents |
 | GET | `/agents/{agent_id}` | Get agent details |
 | POST | `/agents/{agent_id}/runs` | Create agent run |
-| POST | `/agents/{agent_id}/runs/{run_id}/cancel` | Cancel agent run |
-| POST | `/agents/{agent_id}/runs/continue` | Continue agent run |
+| POST | `/agents/{agent_id}/cancel_run` | Cancel agent run |
+| POST | `/agents/{agent_id}/continue_run` | Continue agent run (resume with tool results) |
 
 ## List All Agents
 
@@ -160,10 +160,15 @@ result = await client.run_agent(
 
 ```python
 # Cancel a running agent execution
-await client.cancel_agent_run(
-    agent_id=agent_id,
-    run_id=run_id,
-)
+await client.cancel_agent_run(agent_id=agent_id)
+```
+
+## Continue Agent Run
+
+Resume a paused execution (e.g., after human-in-the-loop tool approval):
+
+```python
+await client.continue_agent_run(agent_id=agent_id)
 ```
 
 ## Authentication
