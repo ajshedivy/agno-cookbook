@@ -10,7 +10,7 @@ description: |
   like "what workflows do I have?" or "run my content pipeline workflow."
 license: Apache-2.0
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: agno-team
   tags: ["agentos", "workflows", "api", "client", "agno"]
 ---
@@ -57,6 +57,18 @@ The script is at: `scripts/run_workflows.py`
 uv run scripts/run_workflows.py --base-url http://localhost:7777
 ```
 
+### Show full AgentOS config
+
+```bash
+uv run scripts/run_workflows.py --base-url http://localhost:7777 --config
+```
+
+### Show workflow-specific config (steps, agents, tools)
+
+```bash
+uv run scripts/run_workflows.py --base-url http://localhost:7777 --config --workflow-id my-workflow
+```
+
 ### Run a specific workflow
 
 ```bash
@@ -93,7 +105,7 @@ Only write ad-hoc Python when the CLI script cannot handle your use case:
 - **Chaining multiple workflow calls** in a single script
 - **Custom error handling** or retry logic
 - **Authentication** with custom headers
-- **Programmatic inspection** of workflow config (steps, agents)
+- **Programmatic inspection** of workflow config beyond what `--config` shows
 - **Integration tests** that assert on response content
 
 ## API Endpoints

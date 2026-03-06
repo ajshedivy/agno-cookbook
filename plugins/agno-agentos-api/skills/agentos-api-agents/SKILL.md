@@ -10,7 +10,7 @@ description: |
   a run in my test agent" or "what agents do I have configured?"
 license: Apache-2.0
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: agno-team
   tags: ["agentos", "agents", "api", "client", "agno"]
 ---
@@ -38,6 +38,18 @@ The script is at: `scripts/run_agents.py`
 
 ```bash
 uv run scripts/run_agents.py --base-url http://localhost:8000
+```
+
+### Show full AgentOS config
+
+```bash
+uv run scripts/run_agents.py --base-url http://localhost:8000 --config
+```
+
+### Show agent-specific config (tools, model, knowledge, memory)
+
+```bash
+uv run scripts/run_agents.py --base-url http://localhost:8000 --config --agent-id my-agent
 ```
 
 ### Run an agent with a message
@@ -90,7 +102,7 @@ Only write ad-hoc Python when the CLI script cannot handle your use case:
 - **Cancel or continue** a running agent
 - **Chaining multiple agent calls** in a single script
 - **Custom error handling** or retry logic
-- **Programmatic inspection** of agent config (tools, model, knowledge)
+- **Programmatic inspection** of agent config beyond what `--config` shows
 - **Integration tests** that assert on response content
 
 ## API Endpoints

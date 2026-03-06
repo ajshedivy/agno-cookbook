@@ -10,7 +10,7 @@ description: |
   configured?" or "run a task on my research team."
 license: Apache-2.0
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: agno-team
   tags: ["agentos", "teams", "api", "client", "agno"]
 ---
@@ -38,6 +38,18 @@ The script is at: `scripts/run_teams.py`
 
 ```bash
 uv run scripts/run_teams.py --base-url http://localhost:7777
+```
+
+### Show full AgentOS config
+
+```bash
+uv run scripts/run_teams.py --base-url http://localhost:7777 --config
+```
+
+### Show team-specific config (members, models, tools)
+
+```bash
+uv run scripts/run_teams.py --base-url http://localhost:7777 --config --team-id my-team
 ```
 
 ### Run a team with a message
@@ -88,7 +100,7 @@ Only write ad-hoc Python when the CLI script cannot handle your use case:
 - **Cancel a team run** mid-execution
 - **Chaining multiple team calls** in a single script
 - **Custom error handling** or retry logic
-- **Programmatic inspection** of team config (members, model, description)
+- **Programmatic inspection** of team config beyond what `--config` shows
 - **Integration tests** that assert on response content
 - **Authentication** with custom headers (e.g., JWT tokens)
 

@@ -10,6 +10,12 @@ Examples:
     # List all available agents
     uv run run_agents.py
 
+    # Show full AgentOS config (agents, teams, workflows, databases, etc.)
+    uv run run_agents.py --config
+
+    # Show detailed config for a specific agent (tools, model, knowledge, memory)
+    uv run run_agents.py --config --agent-id my-agent
+
     # Run a specific agent with a message
     uv run run_agents.py --agent-id my-agent --message "What is 2 + 2?"
 
@@ -34,6 +40,80 @@ import sys
 
 from agno.client import AgentOSClient
 from agno.run.agent import RunCompletedEvent, RunContentEvent
+
+
+async def show_config(client: AgentOSClient, agent_id: str | None) -> None:
+    if agent_id:
+        agent = await client.aget_agent(agent_id)
+        print(f"Agent: {agent.id}")
+        print(f"  name: {agent.name}")
+        if agent.model:
+            print(f"  model: {agent.model}")
+        if agent.description:
+            print(f"  description: {agent.description}")
+
+        # Tools
+        tools_dict = agent.tools or {}
+        for _, tool_list in tools_dict.items():
+            print(f"\n  tools ({len(tool_list)}):")
+            for t in tool_list:
+                name = t.get("name", "unknown")
+                desc = t.get("description", "")
+                preview = desc[:100].replace("\n", " ")
+                if len(desc) > 100:
+                    preview += "..."
+                print(f"    - {name}: {preview}")
+
+        # Knowledge
+        if agent.knowledge:
+            print(f"\n  knowledge: {agent.knowledge}")
+
+        # Memory
+        if agent.memory:
+            print(f"\n  memory: {agent.memory}")
+        return
+
+    config = await client.aget_config()
+    print(f"AgentOS ID: {config.os_id}")
+    if config.name:
+        print(f"Name: {config.name}")
+    print(f"Databases: {', '.join(config.databases or [])}")
+
+    # Agents
+    agents = config.agents or []
+    print(f"\nAgents ({len(agents)}):")
+    for a in agents:
+        print(f"  - {a.id}: {a.name}")
+
+    # Teams
+    teams = config.teams or []
+    if teams:
+        print(f"\nTeams ({len(teams)}):")
+        for t in teams:
+            mode = f" (mode: {t.mode})" if t.mode else ""
+            print(f"  - {t.id}: {t.name}{mode}")
+
+    # Workflows
+    workflows = config.workflows or []
+    if workflows:
+        print(f"\nWorkflows ({len(workflows)}):")
+        for w in workflows:
+            print(f"  - {w.id}: {w.name}")
+
+    # Knowledge
+    if config.knowledge and config.knowledge.knowledge_instances:
+        instances = config.knowledge.knowledge_instances
+        print(f"\nKnowledge ({len(instances)}):")
+        for k in instances:
+            print(f"  - {k.name} (table: {k.table}, db: {k.db_id})")
+
+    # Chat quick prompts
+    if config.chat and config.chat.quick_prompts:
+        print(f"\nQuick Prompts:")
+        for agent_id, prompts in config.chat.quick_prompts.items():
+            print(f"  {agent_id}:")
+            for p in prompts:
+                print(f"    - {p}")
 
 
 async def list_agents(client: AgentOSClient) -> None:
@@ -101,6 +181,7 @@ async def run_agent(
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Run agents via AgentOS API")
     parser.add_argument("--base-url", default="http://localhost:7777", help="AgentOS server URL (default: http://localhost:7777)")
+    parser.add_argument("--config", "-c", action="store_true", help="Show AgentOS config (combine with --agent-id for agent-specific config)")
     parser.add_argument("--agent-id", help="Agent ID to run (default: first available)")
     parser.add_argument("--message", "-m", help="Message to send to the agent")
     parser.add_argument("--stream", "-s", action="store_true", help="Stream the response")
@@ -111,7 +192,9 @@ async def main() -> None:
 
     client = AgentOSClient(base_url=args.base_url)
 
-    if args.message:
+    if args.config:
+        await show_config(client, args.agent_id)
+    elif args.message:
         await run_agent(client, args.agent_id, args.message, args.stream, args.session_id, args.user_id, args.dependencies)
     else:
         await list_agents(client)

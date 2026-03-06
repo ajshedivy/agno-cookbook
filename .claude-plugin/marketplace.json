@@ -24,7 +24,7 @@
       "name": "agno-agentos-api",
       "source": "./plugins/agno-agentos-api",
       "description": "Interact with AgentOS API for remote agent management, sessions, traces, and evals",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "author": {
         "name": "ajshedivy"
       },

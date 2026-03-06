@@ -10,6 +10,12 @@ Examples:
     # List all available teams
     uv run run_teams.py
 
+    # Show full AgentOS config (teams, agents, workflows, databases)
+    uv run run_teams.py --config
+
+    # Show detailed config for a specific team (members, model, tools)
+    uv run run_teams.py --config --team-id my-team
+
     # Run a specific team with a message
     uv run run_teams.py --team-id research-team --message "Compare Python and Rust"
 
@@ -30,6 +36,63 @@ import sys
 
 from agno.client import AgentOSClient
 from agno.run.team import RunCompletedEvent, RunContentEvent
+
+
+async def show_config(client: AgentOSClient, team_id: str | None) -> None:
+    if team_id:
+        team = await client.aget_team(team_id)
+        print(f"Team: {team.id}")
+        print(f"  name: {team.name}")
+        if team.mode:
+            print(f"  mode: {team.mode}")
+        if team.model:
+            print(f"  model: {team.model}")
+        if team.description:
+            print(f"  description: {team.description}")
+
+        members = team.members or []
+        print(f"\n  members ({len(members)}):")
+        for m in members:
+            tools_count = sum(len(tl) for tl in (m.tools or {}).values())
+            print(f"    - {m.id}: {m.name}")
+            if m.model:
+                print(f"        model: {m.model}")
+            print(f"        tools: {tools_count}")
+            if m.description:
+                preview = m.description[:120].replace("\n", " ")
+                if len(m.description) > 120:
+                    preview += "..."
+                print(f"        description: {preview}")
+
+        if team.knowledge:
+            print(f"\n  knowledge: {team.knowledge}")
+        if team.memory:
+            print(f"\n  memory: {team.memory}")
+        return
+
+    config = await client.aget_config()
+    print(f"AgentOS ID: {config.os_id}")
+    if config.name:
+        print(f"Name: {config.name}")
+    print(f"Databases: {', '.join(config.databases or [])}")
+
+    agents = config.agents or []
+    if agents:
+        print(f"\nAgents ({len(agents)}):")
+        for a in agents:
+            print(f"  - {a.id}: {a.name}")
+
+    teams = config.teams or []
+    print(f"\nTeams ({len(teams)}):")
+    for t in teams:
+        mode = f" (mode: {t.mode})" if t.mode else ""
+        print(f"  - {t.id}: {t.name}{mode}")
+
+    workflows = config.workflows or []
+    if workflows:
+        print(f"\nWorkflows ({len(workflows)}):")
+        for w in workflows:
+            print(f"  - {w.id}: {w.name}")
 
 
 async def list_teams(client: AgentOSClient) -> None:
@@ -86,6 +149,7 @@ async def run_team(
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Run teams via AgentOS API")
     parser.add_argument("--base-url", default="http://localhost:7777", help="AgentOS server URL (default: http://localhost:7777)")
+    parser.add_argument("--config", "-c", action="store_true", help="Show AgentOS config (combine with --team-id for team-specific config)")
     parser.add_argument("--team-id", help="Team ID to run (default: first available)")
     parser.add_argument("--message", "-m", help="Message to send to the team")
     parser.add_argument("--stream", "-s", action="store_true", help="Stream the response")
@@ -95,7 +159,9 @@ async def main() -> None:
 
     client = AgentOSClient(base_url=args.base_url)
 
-    if args.message:
+    if args.config:
+        await show_config(client, args.team_id)
+    elif args.message:
         await run_team(client, args.team_id, args.message, args.stream, args.session_id, args.user_id)
     else:
         await list_teams(client)
