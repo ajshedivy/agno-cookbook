@@ -110,8 +110,9 @@ The `plugins/` directory contains agent skill packs that provide domain-specific
 Install skills as [Claude Code plugins](https://docs.anthropic.com/en/docs/claude-code/plugins):
 
 ```bash
-# From the plugin marketplace
-# Run /plugins in Claude Code, search for the skill pack, and install
+# Install from the GitHub repo
+claude plugins add --from https://github.com/ajshedivy/agno-cookbook/tree/main/plugins/agno-framework
+claude plugins add --from https://github.com/ajshedivy/agno-cookbook/tree/main/plugins/agno-agentos-api
 
 # Or install from a local path
 claude plugins add ./plugins/agno-framework
