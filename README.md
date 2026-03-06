@@ -100,3 +100,90 @@ cookbook/
 ```
 
 > **Note:** `cookbook/90_models/` contains provider-specific examples with hardcoded model classes. These are intentionally not configurable — they demonstrate provider-specific features.
+
+## Claude Code Skills
+
+The `plugins/` directory contains Claude Code skill packs that teach Claude how to build with the Agno ecosystem. Skills provide domain-specific guidance, CLI scripts, and API reference patterns so Claude can write correct Agno code, interact with AgentOS instances, and follow framework best practices.
+
+### Installing Skills
+
+Skills are distributed as [Claude Code plugins](https://docs.anthropic.com/en/docs/claude-code/plugins). Install them from the plugin marketplace:
+
+1. Open Claude Code
+2. Run `/plugins` to open the plugin marketplace
+3. Search for the skill pack you want (e.g., `agno-framework` or `agno-agentos-api`)
+4. Select it and confirm the install
+
+Once installed, skills activate automatically based on context — for example, asking Claude to "create an Agno agent with tools" triggers the `agno-agent` skill, and asking "list my agents on AgentOS" triggers `agentos-api-agents`.
+
+You can also install from a local path for development:
+
+```bash
+claude plugins add ./plugins/agno-framework
+claude plugins add ./plugins/agno-agentos-api
+```
+
+### `agno-framework` — Agno SDK Development
+
+13 skills covering all major Agno framework areas:
+
+| Skill | Description |
+|-------|-------------|
+| `agno-agent` | Agent creation, configuration, and tool binding |
+| `agno-team` | Multi-agent team orchestration |
+| `agno-workflow` | Workflow orchestration patterns |
+| `agno-agentos` | AgentOS server setup and deployment |
+| `agno-tools` | Tool development and integration |
+| `agno-knowledge` | Knowledge bases and RAG |
+| `agno-memory` | Memory and session management |
+| `agno-storage` | Persistence backends |
+| `agno-models` | Model providers and configuration |
+| `agno-reasoning` | Reasoning strategies |
+| `agno-multimodal` | Image, audio, and video support |
+| `agno-guardrails` | Input/output validation |
+| `agno-test` | Testing and evaluation patterns |
+
+### `agno-agentos-api` — AgentOS Client API
+
+8 skills for interacting with a running AgentOS instance via the `AgentOSClient` SDK. Each skill includes a CLI script for common operations and reference docs for advanced usage.
+
+| Skill | Description |
+|-------|-------------|
+| `agentos-api-agents` | List, run, and stream agents |
+| `agentos-api-teams` | List and run teams |
+| `agentos-api-workflows` | List and run workflows |
+| `agentos-api-sessions` | Manage sessions and run history |
+| `agentos-api-memory` | Read/write agent memories |
+| `agentos-api-knowledge` | Upload, search, and manage knowledge |
+| `agentos-api-evals` | Run accuracy and performance evaluations |
+| `agentos-api-traces` | Inspect traces and token usage |
+
+Example — list all agents on a running AgentOS:
+
+```bash
+uv run scripts/run_agents.py --base-url http://localhost:8000
+```
+
+### Skill Structure
+
+Each skill is a directory with a `SKILL.md` manifest, optional scripts, and reference docs:
+
+```
+plugins/
+  agno-framework/
+    skills/
+      agno-agent/
+        SKILL.md                  # Trigger rules, instructions, examples
+        references/
+          api-patterns.md         # Detailed API reference
+  agno-agentos-api/
+    skills/
+      agentos-api-agents/
+        SKILL.md
+        scripts/
+          run_agents.py           # CLI script for common operations
+        references/
+          api-patterns.md
+```
+
+See the [`plugins/`](plugins/) directory for full skill definitions and reference documentation.
