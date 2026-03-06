@@ -1,31 +1,35 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["agno[os]"]
+# ///
 """
 Query and manage sessions on an AgentOS instance.
 
 Examples:
     # List all sessions
-    python manage_sessions.py
+    uv run manage_sessions.py
 
     # List sessions for a specific agent
-    python manage_sessions.py --agent-id researcher
+    uv run manage_sessions.py --agent-id researcher
 
     # List sessions for a specific user
-    python manage_sessions.py --user-id alice@example.com
+    uv run manage_sessions.py --user-id alice@example.com
 
     # Show runs inside a specific session
-    python manage_sessions.py --session-id abc-123 --show-runs
+    uv run manage_sessions.py --session-id abc-123 --show-runs
 
     # Create a new session
-    python manage_sessions.py --create --agent-id my-agent --user-id alice --name "Research Chat"
+    uv run manage_sessions.py --create --agent-id my-agent --user-id alice --name "Research Chat"
 
     # Rename a session
-    python manage_sessions.py --session-id abc-123 --rename "New Name"
+    uv run manage_sessions.py --session-id abc-123 --rename "New Name"
 
     # Delete a session
-    python manage_sessions.py --session-id abc-123 --delete
+    uv run manage_sessions.py --session-id abc-123 --delete
 
     # Use a different server
-    python manage_sessions.py --base-url http://my-server:8000
+    uv run manage_sessions.py --base-url http://my-server:8000
 """
 
 import argparse

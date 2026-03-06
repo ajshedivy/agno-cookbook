@@ -1,28 +1,32 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["agno[os]"]
+# ///
 """
 Manage user memories on an AgentOS instance.
 
 Examples:
     # List all memories for a user
-    python manage_memories.py --user-id alice@example.com
+    uv run manage_memories.py --user-id alice@example.com
 
     # Search memories by content
-    python manage_memories.py --user-id alice --search "dark mode"
+    uv run manage_memories.py --user-id alice --search "dark mode"
 
     # Create a new memory
-    python manage_memories.py --user-id alice --create "User prefers dark mode" --topics preferences,ui
+    uv run manage_memories.py --user-id alice --create "User prefers dark mode" --topics preferences,ui
 
     # Update a memory
-    python manage_memories.py --memory-id abc-123 --user-id alice --update "User strongly prefers dark mode"
+    uv run manage_memories.py --memory-id abc-123 --user-id alice --update "User strongly prefers dark mode"
 
     # Delete a memory
-    python manage_memories.py --memory-id abc-123 --user-id alice --delete
+    uv run manage_memories.py --memory-id abc-123 --user-id alice --delete
 
     # List all memory topics
-    python manage_memories.py --topics-list
+    uv run manage_memories.py --topics-list
 
     # Use a different server
-    python manage_memories.py --base-url http://my-server:8000 --user-id alice
+    uv run manage_memories.py --base-url http://my-server:8000 --user-id alice
 """
 
 import argparse

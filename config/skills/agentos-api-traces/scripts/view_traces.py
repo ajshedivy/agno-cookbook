@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["agno[os]"]
+# ///
 """
 View and inspect execution traces on an AgentOS instance.
 
 Examples:
     # List recent traces
-    python view_traces.py
+    uv run view_traces.py
 
     # Get detailed trace info
-    python view_traces.py --trace-id abc-123
+    uv run view_traces.py --trace-id abc-123
 
     # View trace stats grouped by session
-    python view_traces.py --stats
+    uv run view_traces.py --stats
 
     # Limit the number of traces shown
-    python view_traces.py --limit 5
+    uv run view_traces.py --limit 5
 
     # Use a different server
-    python view_traces.py --base-url http://my-server:8000
+    uv run view_traces.py --base-url http://my-server:8000
 """
 
 import argparse

@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["agno[os]"]
+# ///
 """
 Run and manage agent evaluations on an AgentOS instance.
 
 Examples:
     # List all evaluation runs
-    python run_evals.py
+    uv run run_evals.py
 
     # Run an accuracy eval
-    python run_evals.py --agent-id my-agent --accuracy --input "What is 2+2?" --expected "4"
+    uv run run_evals.py --agent-id my-agent --accuracy --input "What is 2+2?" --expected "4"
 
     # Run a performance eval
-    python run_evals.py --agent-id my-agent --performance --input "Hello" --iterations 3
+    uv run run_evals.py --agent-id my-agent --performance --input "Hello" --iterations 3
 
     # Get details for a specific eval
-    python run_evals.py --eval-id abc-123
+    uv run run_evals.py --eval-id abc-123
 
     # Filter evals by agent
-    python run_evals.py --agent-id my-agent
+    uv run run_evals.py --agent-id my-agent
 
     # Use a different server
-    python run_evals.py --base-url http://my-server:8000
+    uv run run_evals.py --base-url http://my-server:8000
 """
 
 import argparse

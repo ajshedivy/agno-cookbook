@@ -17,7 +17,7 @@ metadata:
 
 # AgentOS Teams API
 
-Use `agno.client.AgentOSClient` to list, inspect, and run teams on a remote AgentOS instance. Install with `pip install agno`.
+Use `agno.client.AgentOSClient` to list, inspect, and run teams on a remote AgentOS instance. Only requires `uv` — all dependencies are declared inline via PEP 723.
 
 ## Prerequisites
 

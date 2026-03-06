@@ -1,26 +1,30 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["agno[os]"]
+# ///
 """
 Discover and run agents on an AgentOS instance.
 
 Examples:
     # List all available agents
-    python run_agents.py
+    uv run run_agents.py
 
     # Run a specific agent with a message
-    python run_agents.py --agent-id my-agent --message "What is 2 + 2?"
+    uv run run_agents.py --agent-id my-agent --message "What is 2 + 2?"
 
     # Stream a response from the first available agent
-    python run_agents.py --message "Tell me a joke" --stream
+    uv run run_agents.py --message "Tell me a joke" --stream
 
     # Run against a remote server
-    python run_agents.py --base-url http://my-server:8000 --message "Hello"
+    uv run run_agents.py --base-url http://my-server:8000 --message "Hello"
 
     # Run with session persistence
-    python run_agents.py --agent-id my-agent --message "My name is Alice" --session-id chat-1
-    python run_agents.py --agent-id my-agent --message "What is my name?" --session-id chat-1
+    uv run run_agents.py --agent-id my-agent --message "My name is Alice" --session-id chat-1
+    uv run run_agents.py --agent-id my-agent --message "What is my name?" --session-id chat-1
 
     # Pass dependencies to agent tools
-    python run_agents.py --message "Greet me" --dependencies '{"robot_name": "Anna"}'
+    uv run run_agents.py --message "Greet me" --dependencies '{"robot_name": "Anna"}'
 """
 
 import argparse

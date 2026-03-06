@@ -1,15 +1,15 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["agno[os]", "pytest", "pytest-asyncio"]
+# ///
 """
 Test Agent Template
 ====================
 Template pytest script for testing agents via AgentOSClient.
 
-Prerequisites:
-    1. Start an AgentOS server: python start_agentos.py
-    2. Install test dependencies: pip install pytest pytest-asyncio
-    3. Run tests: pytest test_agent.py -v
-
 Usage:
-    pytest test_agent.py -v
+    uv run pytest test_agent.py -v
+    uv run pytest test_agent.py -v --base-url http://my-server:8000
 """
 
 import asyncio
@@ -18,19 +18,22 @@ import pytest
 from agno.client import AgentOSClient
 from agno.run.agent import RunCompletedEvent, RunContentEvent
 
+
 # ---------------------------------------------------------------------------
-# Configuration
+# CLI option
 # ---------------------------------------------------------------------------
-BASE_URL = "http://localhost:7777"
+def pytest_addoption(parser):
+    parser.addoption("--base-url", default="http://localhost:7777", help="AgentOS server URL")
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 @pytest.fixture
-def client():
+def client(request):
     """Create an AgentOSClient instance."""
-    return AgentOSClient(base_url=BASE_URL)
+    base_url = request.config.getoption("--base-url")
+    return AgentOSClient(base_url=base_url)
 
 
 # ---------------------------------------------------------------------------

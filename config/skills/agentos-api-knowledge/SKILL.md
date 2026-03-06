@@ -17,7 +17,7 @@ metadata:
 
 # AgentOS Knowledge API
 
-Use `agno.client.AgentOSClient` to upload, search, list, and manage knowledge base content on a remote AgentOS instance. Install with `pip install agno`.
+Use `agno.client.AgentOSClient` to upload, search, list, and manage knowledge base content on a remote AgentOS instance. Only requires `uv` — all dependencies are declared inline via PEP 723.
 
 ## Prerequisites
 

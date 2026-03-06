@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["agno[os]"]
+# ///
 """
 Discover and run workflows on an AgentOS instance.
 
 Examples:
     # List all available workflows
-    python run_workflows.py
+    uv run run_workflows.py
 
     # Run a specific workflow
-    python run_workflows.py --workflow-id qa-workflow --message "Explain machine learning"
+    uv run run_workflows.py --workflow-id qa-workflow --message "Explain machine learning"
 
     # Stream a workflow response
-    python run_workflows.py --message "Analyze AI trends" --stream
+    uv run run_workflows.py --message "Analyze AI trends" --stream
 
     # Run against a remote server
-    python run_workflows.py --base-url http://my-server:8000 --message "Process this"
+    uv run run_workflows.py --base-url http://my-server:8000 --message "Process this"
 """
 
 import argparse

@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["agno[os]"]
+# ///
 """
 Discover and run teams on an AgentOS instance.
 
 Examples:
     # List all available teams
-    python run_teams.py
+    uv run run_teams.py
 
     # Run a specific team with a message
-    python run_teams.py --team-id research-team --message "Compare Python and Rust"
+    uv run run_teams.py --team-id research-team --message "Compare Python and Rust"
 
     # Stream a response from the first available team
-    python run_teams.py --message "Analyze Tesla stock" --stream
+    uv run run_teams.py --message "Analyze Tesla stock" --stream
 
     # Run against a remote server
-    python run_teams.py --base-url http://my-server:8000 --message "Research AI trends"
+    uv run run_teams.py --base-url http://my-server:8000 --message "Research AI trends"
 
     # Multi-turn team conversation
-    python run_teams.py --message "Analyze NVIDIA" --session-id research-1
-    python run_teams.py --message "Now compare to AMD" --session-id research-1
+    uv run run_teams.py --message "Analyze NVIDIA" --session-id research-1
+    uv run run_teams.py --message "Now compare to AMD" --session-id research-1
 """
 
 import argparse

@@ -17,16 +17,15 @@ metadata:
 
 # AgentOS Evals API
 
-Use `agno.client.AgentOSClient` to run, list, and inspect agent evaluations on a remote AgentOS instance. Install with `pip install agno`.
+Use `agno.client.AgentOSClient` to run, list, and inspect agent evaluations on a remote AgentOS instance. Only requires `uv` — all dependencies are declared inline via PEP 723.
 
 ## Prerequisites
 
 Start an AgentOS server with agents:
 
 ```bash
-pip install "agno[os,anthropic]"
 export ANTHROPIC_API_KEY=sk-...
-python start_agentos.py  # See agno-agentos skill
+uv run start_agentos.py  # See agno-agentos skill
 ```
 
 ## API Endpoints

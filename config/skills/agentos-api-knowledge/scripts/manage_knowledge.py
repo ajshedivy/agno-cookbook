@@ -1,28 +1,32 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["agno[os]"]
+# ///
 """
 Manage knowledge base content on an AgentOS instance.
 
 Examples:
     # List all content in the knowledge base
-    python manage_knowledge.py
+    uv run manage_knowledge.py
 
     # Search the knowledge base
-    python manage_knowledge.py --search "What is Agno?"
+    uv run manage_knowledge.py --search "What is Agno?"
 
     # Upload a text file (e.g., upload this md file to my knowledge base)
-    python manage_knowledge.py --upload README.md
+    uv run manage_knowledge.py --upload README.md
 
     # Upload raw text
-    python manage_knowledge.py --upload-text "Agno is an AI agent framework" --name "Agno Intro"
+    uv run manage_knowledge.py --upload-text "Agno is an AI agent framework" --name "Agno Intro"
 
     # Check processing status of uploaded content
-    python manage_knowledge.py --status content-id-123
+    uv run manage_knowledge.py --status content-id-123
 
     # Delete specific content
-    python manage_knowledge.py --delete content-id-123
+    uv run manage_knowledge.py --delete content-id-123
 
     # Use a different server
-    python manage_knowledge.py --base-url http://my-server:8000
+    uv run manage_knowledge.py --base-url http://my-server:8000
 """
 
 import argparse

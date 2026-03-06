@@ -15,7 +15,7 @@ metadata:
 
 # Deploy with AgentOS
 
-Use `agno.os.AgentOS` to serve agents, teams, and workflows as production APIs. Install with `pip install "agno[os]"`.
+Use `agno.os.AgentOS` to serve agents, teams, and workflows as production APIs. Only requires `uv` — all dependencies are declared inline via PEP 723.
 
 ## Quick Start
 
@@ -211,7 +211,7 @@ After starting AgentOS, explore endpoints at:
 - **Don't skip `db=`** on agents — without storage, sessions don't persist between API calls
 - **Don't forget `contents_db=` on Knowledge** — required for content upload endpoints
 - **Don't use SQLite in production** — use PostgreSQL for multi-server deployments
-- **Don't forget to install extras**: `pip install "agno[os]"` for AgentOS features
+- **Don't forget extras in PEP 723 header**: scripts need `agno[os]` for AgentOS features
 - **Don't hardcode secrets** — use environment variables for API keys and database URLs
 
 ## Further Reading
