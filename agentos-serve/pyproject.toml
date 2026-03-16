@@ -1,6 +1,6 @@
 [project]
 name = "agentos-serve"
-version = "0.1.0"
+version = "0.1.1"
 description = "Spin up AgentOS from any Python file containing Agno agents, teams, or workflows"
 requires-python = ">=3.12"
 dependencies = [
