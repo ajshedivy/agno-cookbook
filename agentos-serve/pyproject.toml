@@ -5,6 +5,7 @@ description = "Spin up AgentOS from any Python file containing Agno agents, team
 requires-python = ">=3.12"
 dependencies = [
     "agno[os]",
+    "python-dotenv",
     "uvicorn",
 ]
 

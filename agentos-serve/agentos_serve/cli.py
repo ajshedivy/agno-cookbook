@@ -212,6 +212,11 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    # -- Load environment variables (.env) ------------------------------------
+    from dotenv import find_dotenv, load_dotenv
+
+    load_dotenv(find_dotenv(usecwd=True))
+
     # -- Resolve paths ----------------------------------------------------
     py_files = resolve_paths(args.paths)
     if not py_files:
